@@ -16,6 +16,8 @@ class ProductController {
   // final productRepo = ProductRepo();
   final ProductRepo _productRepo; //Putting _ before name makes variable private
 
+  // The constructor takes the required 'productRepo' parameter injected from outside,
+  // and assigns it to the private class variable '_productRepo' using an initializer list (the ':' syntax).
   ProductController({required ProductRepo productRepo})
       : _productRepo = productRepo;
 
