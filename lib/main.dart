@@ -1,6 +1,6 @@
-import 'package:api_with_riverpod/src/home.dart';
 import 'package:api_with_riverpod/src/models/product.dart';
-import 'package:api_with_riverpod/src/product_detail.dart';
+import 'package:api_with_riverpod/src/screens/adaptive_layout.dart';
+import 'package:api_with_riverpod/src/screens/product_detail.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -19,7 +19,7 @@ class MyApp extends StatelessWidget {
       initialRoute: '/',
       routes: {
         '/': (context) =>
-            const HomeView(), //Entry point widget. Creates initial app (repo/home.dart)
+            const AdaptiveLayout(), // Entry point: delegates to HomeView (small) or large-screen layout
       },
 
       // onGenerateRoute handles routes that need arguments (like '/product')

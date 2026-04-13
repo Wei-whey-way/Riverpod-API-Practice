@@ -20,7 +20,8 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
     final product = widget.product;
 
     // Use all product images for the gallery; fall back to thumbnail if empty
-    final images = product.images.isNotEmpty ? product.images : [product.thumbnail];
+    final images =
+        product.images.isNotEmpty ? product.images : [product.thumbnail];
 
     return Scaffold(
       appBar: AppBar(
@@ -30,7 +31,6 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-
             // --- Image Gallery ---
             // A swipeable PageView showing all product images
             SizedBox(
@@ -48,7 +48,8 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                         images[index],
                         fit: BoxFit.contain,
                         errorBuilder: (context, error, stackTrace) =>
-                            const Center(child: Icon(Icons.broken_image, size: 60)),
+                            const Center(
+                                child: Icon(Icons.broken_image, size: 60)),
                       );
                     },
                   ),
@@ -85,11 +86,11 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-
                   // --- Title ---
                   Text(
                     product.title,
-                    style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                        fontSize: 24, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 6),
 
@@ -111,19 +112,35 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
 
                   // --- Price & Discount ---
                   Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Text(
-                        '\$${product.price.toStringAsFixed(2)}',
-                        style: const TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.green,
-                        ),
-                      ),
                       if (product.discountPercentage > 0) ...[
+                        // Original price — crossed out
+                        Text(
+                          '\$${product.price.toStringAsFixed(2)}',
+                          style: const TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.grey,
+                            decoration: TextDecoration.lineThrough,
+                            decorationColor: Colors.grey,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        // Discounted price
+                        Text(
+                          '\$${(product.price * (1 - product.discountPercentage / 100)).toStringAsFixed(2)}',
+                          style: const TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.green,
+                          ),
+                        ),
                         const SizedBox(width: 12),
+                        // Discount badge
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
                             color: Colors.redAccent,
                             borderRadius: BorderRadius.circular(6),
@@ -135,6 +152,16 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                               fontWeight: FontWeight.bold,
                               fontSize: 13,
                             ),
+                          ),
+                        ),
+                      ] else ...[
+                        // No discount — show price normally
+                        Text(
+                          '\$${product.price.toStringAsFixed(2)}',
+                          style: const TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.green,
                           ),
                         ),
                       ],
@@ -152,7 +179,8 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                           const SizedBox(width: 4),
                           Text(
                             product.rating.toStringAsFixed(1),
-                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                            style: const TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.w600),
                           ),
                         ],
                       ),
@@ -162,16 +190,22 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                       Row(
                         children: [
                           Icon(
-                            product.stock > 10 ? Icons.check_circle : Icons.warning_amber_rounded,
+                            product.stock > 10
+                                ? Icons.check_circle
+                                : Icons.warning_amber_rounded,
                             size: 18,
-                            color: product.stock > 10 ? Colors.green : Colors.orange,
+                            color: product.stock > 10
+                                ? Colors.green
+                                : Colors.orange,
                           ),
                           const SizedBox(width: 4),
                           Text(
                             '${product.stock} in stock',
                             style: TextStyle(
                               fontSize: 14,
-                              color: product.stock > 10 ? Colors.green[700] : Colors.orange[800],
+                              color: product.stock > 10
+                                  ? Colors.green[700]
+                                  : Colors.orange[800],
                               fontWeight: FontWeight.w500,
                             ),
                           ),
