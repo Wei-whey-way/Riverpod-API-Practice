@@ -44,6 +44,7 @@ class _LargeScreenLayoutState extends ConsumerState<LargeScreenLayout> {
     // ref.watch() because we want to rebuild the list when the user taps a chip or types in the search bar.
     final selectedBrand = ref.watch(selectedBrandProvider);
     final selectedCategory = ref.watch(selectedCategoryProvider);
+    final priceRange = ref.watch(selectedPriceRange);
     final searchQuery = ref.watch(searchQueryProvider);
     final isGridView = ref.watch(isGridViewProvider);
 
@@ -64,7 +65,7 @@ class _LargeScreenLayoutState extends ConsumerState<LargeScreenLayout> {
           if (snapshot.data == null) {
             return const Center(
               child:
-                  CircularProgressIndicator(), // Show a loading spinner until data arrives.
+                  CircularProgressIndicator(), // Loading spinner until data arrives.
             );
           }
 
@@ -78,9 +79,16 @@ class _LargeScreenLayoutState extends ConsumerState<LargeScreenLayout> {
           // ..sort() sorts alphabetically in-place (the cascade ".." returns the list itself).
           final brands = allProducts.map((p) => p.brand).toSet().toList()
             ..sort();
-
           final categories = allProducts.map((p) => p.category).toSet().toList()
             ..sort();
+          final List<String> priceRanges = [
+            '\$0 - \$50',
+            '\$51 - \$100',
+            '\$101 - \$200',
+            '\$201 - \$500',
+            '\$501 - \$1000',
+            '\$1001+',
+          ];
 
           // Apply all active filters for display.
           final filteredProducts = allProducts.where((p) {
@@ -94,7 +102,28 @@ class _LargeScreenLayoutState extends ConsumerState<LargeScreenLayout> {
                 p.title.toLowerCase().contains(query) ||
                 p.brand.toLowerCase().contains(query);
 
-            return brandMatch && categoryMatch && searchMatch;
+            bool priceMatch = true;
+            if (priceRange != null) {
+              final actualPrice = p.discountPercentage > 0
+                  ? p.price * (1 - p.discountPercentage / 100)
+                  : p.price.toDouble();
+
+              if (priceRange == '\$0 - \$50') {
+                priceMatch = actualPrice >= 0 && actualPrice <= 50;
+              } else if (priceRange == '\$51 - \$100') {
+                priceMatch = actualPrice > 50 && actualPrice <= 100;
+              } else if (priceRange == '\$101 - \$200') {
+                priceMatch = actualPrice > 100 && actualPrice <= 200;
+              } else if (priceRange == '\$201 - \$500') {
+                priceMatch = actualPrice > 200 && actualPrice <= 500;
+              } else if (priceRange == '\$501 - \$1000') {
+                priceMatch = actualPrice > 500 && actualPrice <= 1000;
+              } else {
+                priceMatch = actualPrice > 1000;
+              }
+            }
+
+            return brandMatch && categoryMatch && searchMatch && priceMatch;
           }).toList();
 
           return Column(
@@ -150,10 +179,20 @@ class _LargeScreenLayoutState extends ConsumerState<LargeScreenLayout> {
                 },
               ),
 
+              // --- Price Range Filter Row ---
+              _buildFilterRow(
+                label: 'Price Range',
+                options: priceRanges,
+                selected: priceRange,
+                onSelected: (value) {
+                  ref.read(selectedPriceRange.notifier).state = value;
+                },
+              ),
+
               // --- Results Count & View Toggle ---
               Padding(
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -193,14 +232,14 @@ class _LargeScreenLayoutState extends ConsumerState<LargeScreenLayout> {
     );
   }
 
-  // A reusable helper that renders one horizontal row of FilterChips.
+  // A reusable helper that renders a dropdown for the filter.
   //
   // Parameters:
-  //   label    — the text shown before the chips (e.g. "Brand")
-  //   options  — the list of chip labels to display (e.g. ["Apple", "Samsung"])
-  //   selected — the currently active filter value (null = "All" chip is active)
-  //   onSelected — callback fired when a chip is tapped; receives the new value
-  //                (null when "All" is tapped, or the option string when a chip is tapped)
+  //   label    — the text shown before the dropdown (e.g. "Brand")
+  //   options  — the list of options to display (e.g. ["Apple", "Samsung"])
+  //   selected — the currently active filter value (null = "All")
+  //   onSelected — callback fired when an option is selected; receives the new value
+  //                (null when "All" is selected, or the option string when an option is selected)
   Widget _buildFilterRow({
     required String label,
     required List<String> options,
@@ -208,47 +247,31 @@ class _LargeScreenLayoutState extends ConsumerState<LargeScreenLayout> {
     required void Function(String?) onSelected,
   }) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
       child: Row(
         children: [
           // Static label on the left (e.g. "Brand: ")
           Text('$label: ', style: const TextStyle(fontWeight: FontWeight.bold)),
+          const SizedBox(width: 8),
 
-          // Expanded lets the scroll view take up all remaining horizontal space
+          // Expanded lets the dropdown take up all remaining horizontal space
           Expanded(
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  // "All" chip — selecting this clears the filter for this dimension.
-                  // It's shown as selected (highlighted) when `selected` is null.
-                  FilterChip(
-                    label: const Text('All'),
-                    // selected == null means no specific filter is set → "All" is active
-                    selected: selected == null,
-                    onSelected: (_) {
-                      // Pass null to the callback to signal "clear this filter"
-                      onSelected(null);
-                    },
-                  ),
-                  const SizedBox(width: 6),
-
-                  // One FilterChip per unique brand/category value
-                  ...options.map((opt) => Padding(
-                        padding: const EdgeInsets.only(right: 6),
-                        child: FilterChip(
-                          label: Text(opt),
-                          // This chip is highlighted only if it matches the active filter
-                          selected: selected == opt,
-                          onSelected: (isSelected) {
-                            // If this chip was just selected → set it as the filter.
-                            // If it was already selected and tapped again → clear the filter (null).
-                            onSelected(isSelected ? opt : null);
-                          },
-                        ),
-                      )),
-                ],
-              ),
+            child: DropdownButton<String?>(
+              isExpanded: true,
+              focusColor: Colors.transparent,
+              value: selected,
+              hint: const Text('All'),
+              items: [
+                const DropdownMenuItem<String?>(
+                  value: null,
+                  child: Text('All'),
+                ),
+                ...options.map((opt) => DropdownMenuItem<String?>(
+                      value: opt,
+                      child: Text(opt),
+                    )),
+              ],
+              onChanged: onSelected,
             ),
           ),
         ],
@@ -365,12 +388,28 @@ class _LargeScreenLayoutState extends ConsumerState<LargeScreenLayout> {
     );
   }
 
-  // --- Grid View (2-column card layout) ---
+  // --- Grid View (Adaptive card layout) ---
   Widget _buildGridView(List<Product> products) {
+    // 1. Get the current screen width
+    final screenWidth = MediaQuery.of(context).size.width;
+
+    // 2. Determine crossAxisCount based on screen width breakpoints
+    int adaptiveCrossAxisCount = 2;
+    if (screenWidth > 1200) {
+      adaptiveCrossAxisCount = 6;
+    } else if (screenWidth > 900) {
+      adaptiveCrossAxisCount = 5;
+    } else if (screenWidth > 600) {
+      adaptiveCrossAxisCount = 4;
+    } else if (screenWidth > 400) {
+      adaptiveCrossAxisCount = 3;
+    }
+
     return GridView.builder(
       padding: const EdgeInsets.all(12),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 4, // 4 columns
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount:
+            adaptiveCrossAxisCount, // Replaced hardcoded '4' with our adaptive variable
         crossAxisSpacing: 12, // Horizontal gap between cards
         mainAxisSpacing: 12, // Vertical gap between cards
         childAspectRatio: 0.75, // Card height = width / 0.75 (taller than wide)
@@ -414,17 +453,6 @@ class _LargeScreenLayoutState extends ConsumerState<LargeScreenLayout> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Category label
-                      Text(
-                        product.category,
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: Colors.grey[600],
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-
                       // Product title (truncated)
                       Text(
                         product.title,

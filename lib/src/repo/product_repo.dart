@@ -7,7 +7,8 @@ final productRepoProvider = Provider((ref) => ProductRepo());
 
 class ProductRepo {
   Future<http.Response> getProducts() async {
-    final url = Uri.parse('https://dummyjson.com/products');
+    final url = Uri.parse('https://dummyjson.com/products?limit=0'); //No limit
+    // final url = Uri.parse('https://dummyjson.com/products'); //Limit 30
     final response = await http.get(url);
     log(response.body);
     return response;

@@ -8,6 +8,9 @@ final selectedBrandProvider = StateProvider<String?>((ref) => null);
 // Holds the currently selected category filter.
 final selectedCategoryProvider = StateProvider<String?>((ref) => null);
 
+// Holds the current selected price range
+final selectedPriceRange = StateProvider<String?>((ref) => null);
+
 // Holds the current search query (empty string = no search filter active).
 final searchQueryProvider = StateProvider<String>((ref) => '');
 
